@@ -1,6 +1,4 @@
-﻿[assembly: Rage.Attributes.Plugin("Custom Blips", Author = "Bluscream", Description = "Allows additional blips being added to the map.", ExitPoint = "EntryPoint.Shutdown")]
-
-namespace CustomRespawns
+﻿namespace CustomBlips
 {
     using System;
     using System.Reflection;
@@ -19,7 +17,33 @@ namespace CustomRespawns
         private static string ini = $"{folder}customBlips.ini";
         private static string file;
         private static InitializationFile cfg;
-
+#if DEBUG
+        [ConsoleCommand]
+        private static void Command_Log(string text)
+        {
+            Game.Console.Print(text);
+        }
+        [ConsoleCommand]
+        private static void Command_Notification(string text)
+        {
+            Game.DisplayNotification(text);
+        }
+        [ConsoleCommand]
+        private static void Command_HelpNotification(string text)
+        {
+            Game.DisplayHelp(text);
+        }
+        [ConsoleCommand]
+        private static void Command_Subtitle(string text)
+        {
+            Game.DisplaySubtitle(text);
+        }
+#endif
+        [ConsoleCommand]
+        private static void Command_RevealMap()
+        {
+            Game.IsFullMapRevealForced = true;
+        }
         [ConsoleCommand]
         private static void Command_AddBlip(
             string Name = null, string color = null,
@@ -81,8 +105,7 @@ namespace CustomRespawns
 
         private static void Log(string message)
         {
-            var timestamp = DateTime.Now.ToString();
-            Game.Console.Print($"[{timestamp}] Custom Blips: {message}");
+            Game.Console.Print($"[{DateTime.Now.ToString()}] Custom Blips: {message}");
         }
         private static XElement BlipToXml(Blip blip)
         {
@@ -137,6 +160,7 @@ namespace CustomRespawns
 
         public static void Main()
         {
+            Log("Loading...");
             Game.TerminateAllScripts("selector");
             (new FileInfo(ini)).Directory.Create();
             cfg = new InitializationFile(ini);
@@ -145,8 +169,12 @@ namespace CustomRespawns
                 Log($"File {ini} doesn't exist, creating new one.");
                 cfg.Write("General", "debug", "false");
                 cfg.Write("General", "addBlipsOnStartup", "true");
+                cfg.Write("General", "revealMapOnStartup", "false");
                 cfg.Write("General", "customBlipsXML", $"{folder}customBlips.xml");
             }
+            if (cfg.ReadBoolean("General", "revealMapOnStartup", false))
+                Log("revealMapOnStartup set, revealing map...");
+                Game.IsFullMapRevealForced = true;
             file = cfg.ReadString("General", "customBlipsXML");
             if (bool.Parse(cfg.ReadString("General", "addBlipsOnStartUP")))
             {
@@ -157,12 +185,15 @@ namespace CustomRespawns
                     {
                         XDocument xDocument = XDocument.Load(file.FullName);
                         XElement root = xDocument.Element("CustomBlips");
-                        foreach (XElement el in root.Descendants())
-                        XmlToBlip(el);
+                        foreach (XElement el in root.Descendants()) {
+                            var blip = XmlToBlip(el);
+                            Log($"Added new Blip {blip.Name} from {file.Name} at {blip.Position.X},{blip.Position.Y},{blip.Position.Z}");
+                        }
+                        Log($"Added all Blips from {file.Name}");
                     }
                     catch
                     {
-                        Log($"Cannot load {file}. Make sure it exists and check it's validaty with http://codebeautify.org/xmlvalidator");
+                        Log($"Cannot load {file.FullName}\nMake sure it exists and check it's validaty with http://codebeautify.org/xmlvalidator");
                     }
                 }
             }
