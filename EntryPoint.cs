@@ -45,6 +45,25 @@
             Game.IsFullMapRevealForced = true;
         }
         [ConsoleCommand]
+        private static void Command_LoadBlips(string filename)
+        {
+            try
+            {
+                XDocument xDocument = XDocument.Load($"{folder}{filename}");
+                XElement root = xDocument.Element("CustomBlips");
+                foreach (XElement el in root.Descendants())
+                {
+                    var blip = XmlToBlip(el);
+                    Log($"Added new Blip {blip.Name} from {filename} at {blip.Position.X},{blip.Position.Y},{blip.Position.Z}", true);
+                }
+                Log($"Added all Blips from {filename}");
+            }
+            catch
+            {
+                Log($"Cannot load {filename}\nMake sure it exists and check it's validaty with http://codebeautify.org/xmlvalidator");
+            }
+        }
+        [ConsoleCommand]
         private static void Command_AddBlip(
             string Name = null, string color = null,
             int Alpha = 0, string RouteColor = null,
@@ -103,9 +122,10 @@
             Log($"Added Blip to {file}");
         }
 
-        private static void Log(string message)
+        private static void Log(string message, bool debug = false)
         {
-            Game.Console.Print($"[{DateTime.Now.ToString()}] Custom Blips: {message}");
+            if (!debug || cfg.ReadBoolean("General", "debug", false))
+                Game.Console.Print($"[{DateTime.Now.ToString()}] Custom Blips: {message}");
         }
         private static XElement BlipToXml(Blip blip)
         {
@@ -196,7 +216,7 @@
                         XElement root = xDocument.Element("CustomBlips");
                         foreach (XElement el in root.Descendants()) {
                             var blip = XmlToBlip(el);
-                            Log($"Added new Blip {blip.Name} from {file.Name} at {blip.Position.X},{blip.Position.Y},{blip.Position.Z}");
+                            Log($"Added new Blip {blip.Name} from {file.Name} at {blip.Position.X},{blip.Position.Y},{blip.Position.Z}", true);
                         }
                         Log($"Added all Blips from {file.Name}");
                     }
