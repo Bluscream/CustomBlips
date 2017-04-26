@@ -171,6 +171,15 @@
                 cfg.Write("General", "addBlipsOnStartup", "true");
                 cfg.Write("General", "revealMapOnStartup", "false");
                 cfg.Write("General", "customBlipsXML", $"{folder}customBlips.xml");
+            } else {
+            if (!cfg.DoesKeyExist("General", "debug"))
+                cfg.Write("General", "debug", "false");
+            if (!cfg.DoesKeyExist("General", "addBlipsOnStartup"))
+                cfg.Write("General", "addBlipsOnStartup", "true");
+            if (!cfg.DoesKeyExist("General", "revealMapOnStartup"))
+                cfg.Write("General", "revealMapOnStartup", "false");
+            if (cfg.ReadString("General", "customBlipsXML", "") == "")
+                cfg.Write("General", "customBlipsXML", $"{folder}customBlips.xml");
             }
             if (cfg.ReadBoolean("General", "revealMapOnStartup", false))
                 Log("revealMapOnStartup set, revealing map...");
